@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520">
+<rect x="0" y="0" width="100%" height="100%" fill="white" />
+<text x="450" y="24" font-family="Arial" font-size="18" text-anchor="middle">Matrix add: size vs time</text>
+<line x1="70" y1="450" x2="870" y2="450" stroke="black" />
+<line x1="70" y1="450" x2="70" y2="40" stroke="black" />
+<line x1="70" y1="450.00" x2="870" y2="450.00" stroke="#ddd" />
+<text x="60" y="454.00" font-family="Arial" font-size="12" text-anchor="end">0.0</text>
+<line x1="70" y1="368.00" x2="870" y2="368.00" stroke="#ddd" />
+<text x="60" y="372.00" font-family="Arial" font-size="12" text-anchor="end">0.2</text>
+<line x1="70" y1="286.00" x2="870" y2="286.00" stroke="#ddd" />
+<text x="60" y="290.00" font-family="Arial" font-size="12" text-anchor="end">0.3</text>
+<line x1="70" y1="204.00" x2="870" y2="204.00" stroke="#ddd" />
+<text x="60" y="208.00" font-family="Arial" font-size="12" text-anchor="end">0.5</text>
+<line x1="70" y1="122.00" x2="870" y2="122.00" stroke="#ddd" />
+<text x="60" y="126.00" font-family="Arial" font-size="12" text-anchor="end">0.6</text>
+<line x1="70" y1="40.00" x2="870" y2="40.00" stroke="#ddd" />
+<text x="60" y="44.00" font-family="Arial" font-size="12" text-anchor="end">0.8</text>
+<text x="70.00" y="470" font-family="Arial" font-size="12" text-anchor="middle">64</text>
+<text x="184.29" y="470" font-family="Arial" font-size="12" text-anchor="middle">128</text>
+<text x="412.86" y="470" font-family="Arial" font-size="12" text-anchor="middle">256</text>
+<text x="870.00" y="470" font-family="Arial" font-size="12" text-anchor="middle">512</text>
+<text x="450" y="500" font-family="Arial" font-size="14" text-anchor="middle">Matrix size N (NxN)</text>
+<text x="20" y="260" font-family="Arial" font-size="14" text-anchor="middle" transform="rotate(-90 20 260)">Time (ms)</text>
+<polyline fill="none" stroke="#1f77b4" stroke-width="2" points="70.00,445.48 184.29,435.79 412.86,432.89 870.00,271.83" />
+<polyline fill="none" stroke="#ff7f0e" stroke-width="2" points="70.00,269.23 184.29,242.41 412.86,207.83 870.00,77.27" />
+<circle cx="70.00" cy="445.48" r="4" fill="#1f77b4" />
+<circle cx="184.29" cy="435.79" r="4" fill="#1f77b4" />
+<circle cx="412.86" cy="432.89" r="4" fill="#1f77b4" />
+<circle cx="870.00" cy="271.83" r="4" fill="#1f77b4" />
+<circle cx="70.00" cy="269.23" r="4" fill="#ff7f0e" />
+<circle cx="184.29" cy="242.41" r="4" fill="#ff7f0e" />
+<circle cx="412.86" cy="207.83" r="4" fill="#ff7f0e" />
+<circle cx="870.00" cy="77.27" r="4" fill="#ff7f0e" />
+<rect x="630" y="50" width="230" height="48" fill="white" stroke="#ccc" />
+<line x1="640" y1="66" x2="670" y2="66" stroke="#1f77b4" stroke-width="2" />
+<text x="680" y="70" font-family="Arial" font-size="12">CPU (compute)</text>
+<line x1="640" y1="84" x2="670" y2="84" stroke="#ff7f0e" stroke-width="2" />
+<text x="680" y="88" font-family="Arial" font-size="12">GPU (H2D+kernel+D2H)</text>
+</svg>
