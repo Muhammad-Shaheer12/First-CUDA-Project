@@ -1,0 +1,10 @@
+# Build outputs
+/build/
+*.exe
+*.o
+*.obj
+*.pdb
+
+# Editor/OS
+.vscode/
+.DS_Store
