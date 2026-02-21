@@ -1,0 +1,8 @@
+build/
+*.exe
+*.obj
+*.o
+*.pdb
+bench/tmp/
+bench/results.csv
+bench/plot.svg
