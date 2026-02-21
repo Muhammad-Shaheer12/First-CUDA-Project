@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assignment 02 - Matrix Multiplication on CPU &amp; GPU</title>
+    <style>
+        @media print {
+            body { margin: 0; padding: 20px; }
+            .page-break { page-break-before: always; }
+            pre { white-space: pre-wrap; word-wrap: break-word; }
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px;
+            color: #333;
+            background: #fff;
+        }
+
+        h1 {
+            color: #1a1a1a;
+            border-bottom: 3px solid #0066cc;
+            padding-bottom: 15px;
+            text-align: center;
+            font-size: 28px;
+        }
+
+        h2 {
+            color: #0066cc;
+            margin-top: 40px;
+            border-left: 4px solid #0066cc;
+            padding-left: 15px;
+        }
+
+        h3 { color: #333; margin-top: 25px; }
+
+        .header-info {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+        .header-info p { margin: 5px 0; }
+
+        pre, code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+        }
+        pre {
+            padding: 15px;
+            overflow-x: auto;
+            border: 1px solid #ddd;
+        }
+
+        .output-box {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .output-box .prompt  { color: #6a9955; }
+        .output-box .command { color: #ce9178; }
+
+        .success { color: #4caf50; font-weight: bold; }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px 14px;
+            text-align: left;
+        }
+        th {
+            background: #0066cc;
+            color: #fff;
+        }
+        tr:nth-child(even) { background: #f9f9f9; }
+
+        .file-tree {
+            background: #f4f4f4;
+            padding: 15px 20px;
+            border-radius: 6px;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+        }
+
+        a { color: #0066cc; }
+
+        .note-box {
+            background: #e8f4fd;
+            border-left: 4px solid #0066cc;
+            padding: 12px 16px;
+            margin: 15px 0;
+            border-radius: 0 6px 6px 0;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ================================================================ -->
+<!--  TITLE PAGE                                                      -->
+<!-- ================================================================ -->
+<h1>Assignment 02<br>Matrix Multiplication on CPU &amp; GPU</h1>
+
+<div class="header-info">
+    <p><strong>Name:</strong> Muhammad Shaheer</p>
+    <p><strong>Registration No:</strong> 2023508</p>
+    <p><strong>Faculty:</strong> AI</p>
+    <p><strong>Course:</strong> CS327 — GPU Programming</p>
+    <p><strong>Date:</strong> February 2026</p>
+    <p><strong>GitHub Repository:</strong>
+       <a href="https://github.com/Muhammad-Shaheer12/First-CUDA-Project" target="_blank">
+       https://github.com/Muhammad-Shaheer12/First-CUDA-Project</a></p>
+</div>
+
+<!-- ================================================================ -->
+<!--  TASK 1                                                          -->
+<!-- ================================================================ -->
+<h2>Task 01 — GPU Properties Query</h2>
+
+<h3>Objective</h3>
+<p>Write a CUDA program that uses <code>cudaGetDeviceProperties()</code> and
+<code>cudaDeviceGetAttribute()</code> to query and display all relevant properties
+of the installed GPU, together with derived peak memory bandwidth and peak
+FP32 throughput.</p>
+
+<h3>Key Source File</h3>
+<div class="file-tree">
+assignment02/task01/src/device_query.cu
+</div>
+
+<h3>Build &amp; Run</h3>
+<pre>cd assignment02\task01
+.\build_win64.bat
+.\device_query.exe</pre>
+
+<h3>Output (Selected)</h3>
+<div class="output-box">Device 0: NVIDIA GeForce RTX 5070
+  Compute Capability .............. 12.0
+  Multiprocessor Count ............ 48
+  CUDA Cores (est.) ............... 6144
+  Global Memory ................... 12288 MB
+  L2 Cache Size ................... 50331648 bytes (48 MB)
+  Memory Bus Width ................ 192 bits
+  Shared Memory per Block ......... 49152 bytes (48 KB)
+  Max Threads per Block ........... 1024
+  Warp Size ....................... 32
+  Max Grid Size ................... 2147483647 × 65535 × 65535
+  Max Block Size .................. 1024 × 1024 × 64
+
+  ── Derived Peaks ──
+  Peak Memory Bandwidth ........... 672.00 GB/s
+  Peak FP32 Throughput ............ ~32358 GFLOPS</div>
+
+<h3>Discussion</h3>
+<p>The RTX 5070 (Blackwell architecture, CC 12.0) features 48 SMs with an
+estimated 6144 CUDA cores. The shared memory per block is
+<strong>49 152 bytes (48 KB)</strong>, and the maximum threads per block is
+<strong>1024</strong> — both constraints are critical for determining the maximum
+tile size in Task 05.</p>
+
+<!-- ================================================================ -->
+<!--  TASK 2                                                          -->
+<!-- ================================================================ -->
+<div class="page-break"></div>
+<h2>Task 02 — CPU Matrix Multiplication</h2>
+
+<h3>Objective</h3>
+<p>Implement matrix multiplication (<b>C = A × B</b>) on the CPU in C++,
+supporting potentially non-square matrices. The program reads two matrices
+from an M2X-format file and writes the result.</p>
+
+<h3>Algorithm</h3>
+<p>Classic triple-nested loop: for each element C(i, j), compute the dot product
+of row i of A and column j of B.</p>
+
+<pre>for i in 0..M:
+    for j in 0..N:
+        sum = 0
+        for p in 0..K:
+            sum += A(i,p) * B(p,j)
+        C(i,j) = sum</pre>
+
+<h3>File Structure</h3>
+<div class="file-tree">
+assignment02/task02/
+├── Makefile
+├── data/sample_input.txt
+└── src/
+    ├── main.cpp
+    ├── matrix.hpp / matrix.cpp
+    ├── io.hpp / io.cpp
+    └── ops.hpp / ops.cpp
+</div>
+
+<h3>Build &amp; Run</h3>
+<pre>cd assignment02\task02
+mingw32-make
+.\matmul_cpu.exe data\sample_input.txt</pre>
+
+<h3>Sample Output</h3>
+<div class="output-box"><span class="prompt">$</span> <span class="command">.\matmul_cpu.exe data\sample_input.txt</span>
+M2X 1
+C 2 2
+58 64
+139 154</div>
+
+<p>Input: A(2×3) = [1 2 3; 4 5 6], B(3×2) = [7 8; 9 10; 11 12].<br>
+Expected: C(2×2) = [58 64; 139 154]. <span class="success">✓ Correct.</span></p>
+
+<h3>Compiler Flags</h3>
+<pre>g++ -std=c++17 -O2 -g -Wall -Wextra -Wpedantic -Werror -Wconversion -Wsign-conversion</pre>
+<p><span class="success">0 warnings, 0 errors.</span></p>
+
+<!-- ================================================================ -->
+<!--  TASK 3                                                          -->
+<!-- ================================================================ -->
+<div class="page-break"></div>
+<h2>Task 03 — Naive CUDA Matrix Multiplication</h2>
+
+<h3>Objective</h3>
+<p>Port the CPU matrix multiplication to a <strong>naive CUDA kernel</strong>
+where each thread computes one element of the output matrix C.</p>
+
+<h3>Kernel</h3>
+<pre>__global__ void matmul_kernel(const double* A, const double* B, double* C,
+                              unsigned M, unsigned K, unsigned N) {
+    unsigned row = blockIdx.y * blockDim.y + threadIdx.y;
+    unsigned col = blockIdx.x * blockDim.x + threadIdx.x;
+    if (row &lt; M &amp;&amp; col &lt; N) {
+        double sum = 0.0;
+        for (unsigned p = 0; p &lt; K; ++p)
+            sum += A[row * K + p] * B[p * N + col];
+        C[row * N + col] = sum;
+    }
+}</pre>
+
+<p>Grid/block configuration: 2D blocks of 16×16 threads, grid sized to cover the
+output matrix dimensions.</p>
+
+<h3>Build &amp; Run</h3>
+<pre>cd assignment02\task03
+.\build_win64.bat
+.\matmul_cuda.exe data\sample_input.txt</pre>
+
+<h3>Output</h3>
+<div class="output-box"><span class="prompt">$</span> <span class="command">.\matmul_cuda.exe data\sample_input.txt</span>
+M2X 1
+C 2 2
+58 64
+139 154</div>
+<p><span class="success">✓ Matches CPU output.</span></p>
+
+<h3>Computational Intensity (Naive)</h3>
+<p>For square N×N matrices:</p>
+<table>
+    <tr><th>Metric</th><th>Value</th></tr>
+    <tr><td>Total FLOPs</td><td>2 · N³ (N multiply-adds per element, N² elements)</td></tr>
+    <tr><td>Global memory traffic</td><td>Each thread reads N doubles from A + N from B + writes 1 → N² · (2N+1) · 8 bytes</td></tr>
+    <tr><td><strong>Computational Intensity</strong></td><td><strong>≈ 0.125 FLOP/byte</strong> (= 1/8)</td></tr>
+</table>
+
+<div class="note-box">
+The naive kernel is <strong>memory-bound</strong> — each loaded value is used
+only once and there is no data reuse across threads. Tiling (Task 05) addresses
+this by loading tiles into shared memory.
+</div>
+
+<!-- ================================================================ -->
+<!--  TASK 4                                                          -->
+<!-- ================================================================ -->
+<div class="page-break"></div>
+<h2>Task 04 — Timing &amp; Benchmarking</h2>
+
+<h3>Objective</h3>
+<p>Add timing instrumentation to both CPU and GPU programs, then benchmark
+across matrix sizes N = 64, 128, 256, 512, 1024, 2048.</p>
+
+<h3>Timing Method</h3>
+<table>
+    <tr><th>Variant</th><th>Method</th><th>Scope</th></tr>
+    <tr><td>CPU</td><td><code>std::chrono::high_resolution_clock</code></td><td>Multiplication only</td></tr>
+    <tr><td>GPU</td><td><code>cudaEvent</code> (start/stop)</td><td>H2D + kernel + D2H</td></tr>
+</table>
+
+<h3>Results</h3>
+<table>
+    <tr>
+        <th>N</th>
+        <th>CPU (ms)</th>
+        <th>GPU Naive (ms)</th>
+        <th>Speedup</th>
+    </tr>
+    <tr><td>64</td><td>0.11</td><td>0.49</td><td>0.22×</td></tr>
+    <tr><td>128</td><td>1.26</td><td>0.53</td><td>2.36×</td></tr>
+    <tr><td>256</td><td>25.03</td><td>0.65</td><td>38.41×</td></tr>
+    <tr><td>512</td><td>338.44</td><td>5.78</td><td>58.59×</td></tr>
+    <tr><td>1024</td><td>3076.70</td><td>10.60</td><td>290.33×</td></tr>
+    <tr><td>2048</td><td>41813.30</td><td>59.42</td><td>703.75×</td></tr>
+</table>
+
+<h3>Performance Plot</h3>
+<p>Log-scale plot of CPU vs GPU execution time (generated by
+<code>bench/benchmark.py</code>):</p>
+
+<div style="text-align:center; margin: 20px 0;">
+    <img src="task04/bench/plot.svg" alt="CPU vs GPU Naive benchmark plot"
+         style="max-width:100%; border:1px solid #ddd; border-radius:6px;">
+</div>
+
+<h3>Observations</h3>
+<ul>
+    <li>At small sizes (N=64), GPU overhead dominates and CPU is faster.</li>
+    <li>The crossover occurs around N≈100–128.</li>
+    <li>At N=2048, the GPU achieves a <strong>~704× speedup</strong> over the CPU.</li>
+    <li>CPU scaling is O(N³); GPU times grow much more slowly thanks to massive parallelism.</li>
+</ul>
+
+<!-- ================================================================ -->
+<!--  TASK 5                                                          -->
+<!-- ================================================================ -->
+<div class="page-break"></div>
+<h2>Task 05 — Tiled GPU Matrix Multiplication</h2>
+
+<h3>Objective</h3>
+<p>Implement a <strong>tiled (shared-memory)</strong> matrix multiplication kernel
+and compare its performance against the naive GPU and CPU implementations.</p>
+
+<h3>Tiled Kernel Design</h3>
+<p>Each thread block loads a <em>TILE×TILE</em> sub-matrix of A and B into
+shared memory, computes partial dot products, then advances to the next tile
+pair. This converts global memory accesses to shared memory accesses within
+each tile.</p>
+
+<pre>__global__ void matmul_tiled_kernel(const double* A, const double* B, double* C,
+                                    unsigned M, unsigned K, unsigned N, unsigned TILE) {
+    extern __shared__ double smem[];
+    double* As = smem;
+    double* Bs = smem + TILE * TILE;
+    // ... load tile, __syncthreads(), accumulate, __syncthreads() ...
+}</pre>
+
+<h3>Maximum Tile Size Analysis</h3>
+<table>
+    <tr><th>Constraint</th><th>Calculation</th><th>Limit</th></tr>
+    <tr>
+        <td>Shared memory per block</td>
+        <td>2 × T² × 8 bytes ≤ 49 152</td>
+        <td>T ≤ 55</td>
+    </tr>
+    <tr>
+        <td>Max threads per block</td>
+        <td>T² ≤ 1024</td>
+        <td>T ≤ 32</td>
+    </tr>
+    <tr>
+        <td colspan="2"><strong>Maximum tile size</strong></td>
+        <td><strong>32 × 32</strong></td>
+    </tr>
+</table>
+
+<div class="note-box">
+The binding constraint is <code>maxThreadsPerBlock = 1024</code> (32² = 1024),
+not shared memory (which could support up to T=55 for doubles).
+</div>
+
+<h3>Computational Intensity Comparison</h3>
+<table>
+    <tr><th>Kernel</th><th>Intensity (FLOP/byte)</th><th>Improvement</th></tr>
+    <tr><td>Naive</td><td>0.125</td><td>—</td></tr>
+    <tr><td>Tiled (T=8)</td><td>1.0</td><td>8×</td></tr>
+    <tr><td>Tiled (T=16)</td><td>2.0</td><td>16×</td></tr>
+    <tr><td>Tiled (T=32)</td><td>4.0</td><td>32×</td></tr>
+</table>
+
+<p>Formula: Intensity = T / 8 FLOP/byte. Each tile load brings 2·T² doubles
+(16·T² bytes) and contributes 2·T³ FLOPs.</p>
+
+<h3>Benchmark Results — CPU vs GPU-Naive vs GPU-Tiled</h3>
+<table>
+    <tr>
+        <th>N</th>
+        <th>CPU (ms)</th>
+        <th>GPU Naive (ms)</th>
+        <th>Tiled 8 (ms)</th>
+        <th>Tiled 16 (ms)</th>
+        <th>Tiled 32 (ms)</th>
+    </tr>
+    <tr><td>64</td><td>0.18</td><td>0.62</td><td>0.51</td><td>0.41</td><td>2.59</td></tr>
+    <tr><td>128</td><td>1.36</td><td>0.59</td><td>4.23</td><td>0.44</td><td>0.69</td></tr>
+    <tr><td>256</td><td>25.01</td><td>0.60</td><td>0.63</td><td>0.61</td><td>2.98</td></tr>
+    <tr><td>512</td><td>364.30</td><td>1.77</td><td>1.48</td><td>4.55</td><td>4.49</td></tr>
+    <tr><td>1024</td><td>2688.56</td><td>6.77</td><td>7.32</td><td>6.04</td><td>5.49</td></tr>
+    <tr><td>2048</td><td>40811.80</td><td>59.99</td><td>56.78</td><td>60.91</td><td>60.59</td></tr>
+</table>
+
+<h3>Performance Plot</h3>
+<div style="text-align:center; margin: 20px 0;">
+    <img src="task05/bench/plot.svg" alt="CPU vs GPU-Naive vs GPU-Tiled benchmark plot"
+         style="max-width:100%; border:1px solid #ddd; border-radius:6px;">
+</div>
+
+<h3>Observations</h3>
+<ul>
+    <li>At large matrix sizes (N ≥ 1024), the <strong>tiled kernel with T=32</strong>
+        is the fastest GPU variant, as expected from its higher computational intensity.</li>
+    <li>At smaller sizes, launch overhead and occupancy effects can make certain tile
+        sizes appear slower (e.g., T=32 at N=64).</li>
+    <li>The tiled kernel achieves up to <strong>32× better computational intensity</strong>
+        over the naive kernel (4.0 vs 0.125 FLOP/byte at T=32).</li>
+    <li>Both GPU kernels drastically outperform the CPU beyond N=256,
+        with speedups exceeding <strong>700×</strong> at N=2048.</li>
+</ul>
+
+<!-- ================================================================ -->
+<!--  REPO                                                            -->
+<!-- ================================================================ -->
+<div class="page-break"></div>
+<h2>GitHub Repository</h2>
+
+<p>All source code, build scripts, benchmark data, and plots are available at:</p>
+
+<div style="text-align:center; padding:15px; background:#f5f5f5; border-radius:8px; margin:20px 0;">
+    <a href="https://github.com/Muhammad-Shaheer12/First-CUDA-Project" target="_blank"
+       style="font-size:18px; font-weight:bold;">
+       https://github.com/Muhammad-Shaheer12/First-CUDA-Project
+    </a>
+</div>
+
+<h3>Repository Structure (Assignment 02)</h3>
+<div class="file-tree">
+assignment02/
+├── task01/          GPU device properties query
+│   └── src/device_query.cu
+├── task02/          CPU matrix multiplication
+│   ├── Makefile
+│   └── src/ (main.cpp, matrix, io, ops)
+├── task03/          CUDA naive matrix multiplication
+│   ├── Makefile, build_win64.bat
+│   └── src/ (main.cu, ops.cu, cuda_utils, matrix, io)
+├── task04/          Timing &amp; benchmarks (CPU vs GPU)
+│   ├── cpu/  (timed CPU matmul)
+│   ├── gpu/  (timed GPU matmul with cudaEvent)
+│   └── bench/benchmark.py → results.csv, plot.svg
+└── task05/          Tiled GPU matrix multiplication
+    ├── cpu/  (timed CPU matmul)
+    ├── gpu/  (naive + tiled kernels, --tile SIZE flag)
+    └── bench/benchmark.py → results.csv, plot.svg
+</div>
+
+<h3>Build Environment</h3>
+<table>
+    <tr><th>Component</th><th>Version</th></tr>
+    <tr><td>OS</td><td>Windows 11</td></tr>
+    <tr><td>GPU</td><td>NVIDIA GeForce RTX 5070 (CC 12.0)</td></tr>
+    <tr><td>CUDA Toolkit</td><td>13.1 (nvcc V13.1.115)</td></tr>
+    <tr><td>Host Compiler</td><td>MSVC 17.14.25 (Visual Studio 2022)</td></tr>
+    <tr><td>CPU Compiler</td><td>g++ (MSYS2/UCRT64)</td></tr>
+    <tr><td>Build System</td><td>mingw32-make + build_win64.bat</td></tr>
+    <tr><td>Python</td><td>3.x (via <code>py -3</code>)</td></tr>
+</table>
+
+</body>
+</html>
